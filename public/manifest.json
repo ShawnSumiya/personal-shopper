@@ -1,6 +1,6 @@
 {
-    "name": "Personal Shopper",
-    "short_name": "Shopper",
+    "name": "Personal Shopper from Japan",
+    "short_name": "PS Japan",
     "description": "Your Access to Japanese Goods",
     "start_url": "/",
     "display": "standalone",
