@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'Courier New', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+
