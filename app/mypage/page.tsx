@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SignOutButton from '@/components/SignOutButton'
-import { MessageCircle } from 'lucide-react' // アイコン追加
+import { MessageCircle, LayoutGrid } from 'lucide-react' // アイコン追加
 
 export default async function MyPage() {
   const cookieStore = cookies()
@@ -37,9 +37,9 @@ export default async function MyPage() {
       {/* ヘッダー */}
       <header className="border-b border-gray-800 bg-dark-card/50 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
+          <Link href="/" className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent hover:opacity-80 transition">
             Personal Shopper
-          </h1>
+          </Link>
           <div className="flex items-center gap-4">
             
             {user.email === 'shawn.sumiya@gmail.com' && (
@@ -59,14 +59,28 @@ export default async function MyPage() {
 
       {/* メインコンテンツ */}
       <main className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-white">My Requests</h2>
-          <Link
-            href="/requests/new"
-            className="bg-neon-pink hover:bg-neon-pinkLight text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-neon-pink/20 transition-all hover:scale-105"
-          >
-            + New Request
-          </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+          <h2 className="text-2xl font-bold text-white w-full sm:w-auto text-left">My Requests</h2>
+          
+          {/* ボタンエリア */}
+          <div className="flex gap-3 w-full sm:w-auto">
+            {/* Showcaseボタン（ここに追加！） */}
+            <Link
+              href="/showcase"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-bold border border-gray-700 transition-all hover:border-gray-500"
+            >
+              <LayoutGrid size={18} />
+              Showcase
+            </Link>
+
+            {/* 新規リクエストボタン */}
+            <Link
+              href="/requests/new"
+              className="flex-1 sm:flex-none bg-neon-pink hover:bg-neon-pinkLight text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-neon-pink/20 transition-all hover:scale-105 text-center"
+            >
+              + New Request
+            </Link>
+          </div>
         </div>
 
         {/* リスト表示エリア */}
@@ -74,14 +88,19 @@ export default async function MyPage() {
           <div className="bg-dark-card border border-gray-800 rounded-xl p-10 text-center">
             <div className="text-gray-500 mb-4 text-lg">No requests yet.</div>
             <p className="text-gray-600 mb-6">
-              Click the button above to send your first request!
+              Check our showcase or create a new request!
             </p>
+            <div className="flex justify-center gap-4">
+                <Link href="/showcase" className="text-neon-cyan hover:underline">Browse Showcase</Link>
+                <span className="text-gray-600">|</span>
+                <Link href="/requests/new" className="text-neon-pink hover:underline">Create Request</Link>
+            </div>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {requests.map((req) => (
               <Link href={`/requests/${req.id}`} key={req.id} className="block group relative">
-                {/* ★未読バッジ（ここに追加） */}
+                {/* 未読バッジ */}
                 {req.unread_user && (
                   <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10 animate-pulse flex items-center gap-1">
                     <MessageCircle size={12} fill="white" />

@@ -1,20 +1,31 @@
 import Link from 'next/link'
-import { ArrowRight, ShoppingBag, Globe, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ShoppingBag, Globe, ShieldCheck, LayoutGrid } from 'lucide-react'
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <header className="px-6 h-20 flex items-center justify-between border-b border-gray-900">
-        <div className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
+      <header className="px-6 h-20 flex items-center justify-between border-b border-gray-900 sticky top-0 bg-black/80 backdrop-blur-md z-50">
+        <Link href="/" className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent hover:opacity-80 transition-opacity">
           Personal Shopper
-        </div>
-        <Link 
-          href="/login" 
-          className="text-sm font-bold hover:text-neon-pink transition-colors"
-        >
-          Login
         </Link>
+        
+        {/* ナビゲーションメニューを追加 */}
+        <nav className="flex items-center gap-6">
+          <Link 
+            href="/showcase" 
+            className="text-sm font-bold text-gray-300 hover:text-white transition-colors flex items-center gap-2"
+          >
+            <LayoutGrid size={16} />
+            <span className="hidden sm:inline">Showcase</span>
+          </Link>
+          <Link 
+            href="/login" 
+            className="text-sm font-bold text-neon-pink hover:text-neon-pinkLight transition-colors"
+          >
+            Login
+          </Link>
+        </nav>
       </header>
 
       {/* Hero Section */}
@@ -44,33 +55,36 @@ export default function Home() {
               <ShoppingBag size={20} />
               Start Request
             </Link>
+            
+            {/* ↓ 2つ目のボタンをShowcase行きに変更！ */}
             <Link 
-              href="/login" // ログイン画面へ誘導
-              className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-full border border-gray-700 transition-all flex items-center justify-center gap-2"
+              href="/showcase" 
+              className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-full border border-gray-700 transition-all flex items-center justify-center gap-2 group"
             >
-              Log In
-              <ArrowRight size={20} />
+              <LayoutGrid size={20} />
+              Browse Showcase
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>
 
         {/* Features Grid */}
         <div className="grid md:grid-cols-3 gap-8 mt-20 max-w-5xl text-left">
-          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800">
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-blue-500/50 transition-colors">
             <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400 mb-4">
               <ShoppingBag />
             </div>
             <h3 className="text-xl font-bold mb-2">Request Anything</h3>
             <p className="text-gray-400">Send us a photo or link of the item you want. We handle the searching.</p>
           </div>
-          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800">
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-purple-500/50 transition-colors">
             <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400 mb-4">
               <ShieldCheck />
             </div>
             <h3 className="text-xl font-bold mb-2">Secure Buying</h3>
             <p className="text-gray-400">We verify the item condition and handle the purchase safely via eBay.</p>
           </div>
-          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800">
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-pink-500/50 transition-colors">
             <div className="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center text-pink-400 mb-4">
               <Globe />
             </div>

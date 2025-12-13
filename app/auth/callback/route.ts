@@ -11,9 +11,9 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // URLにredirect_toパラメータがある場合はそこへ、なければダッシュボードへ
-  const redirectTo = requestUrl.searchParams.get('redirect_to') || '/dashboard'
+  // ▼ ここを修正！ (/dashboard -> /showcase)
+  // URLにredirect_toパラメータがある場合はそこへ、なければShowcase（商品一覧）へ
+  const redirectTo = requestUrl.searchParams.get('redirect_to') || '/showcase'
 
   return NextResponse.redirect(`${origin}${redirectTo}`)
 }
-

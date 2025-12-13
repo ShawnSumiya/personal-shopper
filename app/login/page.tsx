@@ -1,4 +1,3 @@
-// app/login/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -31,7 +30,8 @@ export default function LoginPage() {
       setMessage(error.message)
       setLoading(false)
     } else {
-      router.push('/mypage')
+      // ▼ ここを変更しました！ (/mypage -> /showcase)
+      router.push('/showcase')
       router.refresh()
     }
   }
