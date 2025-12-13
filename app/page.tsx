@@ -10,7 +10,7 @@ export default function Home() {
           Personal Shopper
         </Link>
         
-        {/* ナビゲーションメニューを追加 */}
+        {/* ナビゲーションメニュー */}
         <nav className="flex items-center gap-6">
           <Link 
             href="/showcase" 
@@ -48,15 +48,15 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            {/* ▼ ここを修正しました！ (/login -> /requests/new) */}
             <Link 
-              href="/login" 
+              href="/requests/new" 
               className="w-full sm:w-auto px-8 py-4 bg-neon-pink hover:bg-neon-pinkLight text-white font-bold rounded-full transition-all hover:scale-105 shadow-[0_0_20px_rgba(236,72,153,0.5)] flex items-center justify-center gap-2"
             >
               <ShoppingBag size={20} />
               Start Request
             </Link>
             
-            {/* ↓ 2つ目のボタンをShowcase行きに変更！ */}
             <Link 
               href="/showcase" 
               className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-full border border-gray-700 transition-all flex items-center justify-center gap-2 group"
