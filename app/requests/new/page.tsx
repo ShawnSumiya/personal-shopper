@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Upload, Loader2, Send, X } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
+// ↓↓↓ 1. これを追加！ ↓↓↓
+import { sendLineNotification } from '@/lib/line'
 
 export default function NewRequestPage() {
+  // ... (ここは変更なし) ...
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -28,45 +31,48 @@ export default function NewRequestPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+  
+  // ... (handleFileSelect や removeImage は変更なし) ...
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files)
-      
-      if (selectedFiles.length + newFiles.length > 4) {
-        setErrorMsg('Max 4 images allowed.')
-        return
-      }
-
-      const validFiles: File[] = []
-      const validPreviews: string[] = []
-
-      newFiles.forEach(file => {
-        if (!file.type.startsWith('image/')) return
-        if (file.size > 20 * 1024 * 1024) return 
+      // (省略)
+      if (e.target.files && e.target.files.length > 0) {
+        const newFiles = Array.from(e.target.files)
         
-        validFiles.push(file)
-        validPreviews.push(URL.createObjectURL(file))
-      })
-
-      setSelectedFiles([...selectedFiles, ...validFiles])
-      setPreviewUrls([...previewUrls, ...validPreviews])
-      setErrorMsg(null)
-      
-      if (fileInputRef.current) fileInputRef.current.value = ''
+        if (selectedFiles.length + newFiles.length > 4) {
+          setErrorMsg('Max 4 images allowed.')
+          return
+        }
+  
+        const validFiles: File[] = []
+        const validPreviews: string[] = []
+  
+        newFiles.forEach(file => {
+          if (!file.type.startsWith('image/')) return
+          if (file.size > 20 * 1024 * 1024) return 
+          
+          validFiles.push(file)
+          validPreviews.push(URL.createObjectURL(file))
+        })
+  
+        setSelectedFiles([...selectedFiles, ...validFiles])
+        setPreviewUrls([...previewUrls, ...validPreviews])
+        setErrorMsg(null)
+        
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      }
     }
-  }
-
-  const removeImage = (index: number) => {
-    const newFiles = [...selectedFiles]
-    const newPreviews = [...previewUrls]
-    
-    newFiles.splice(index, 1)
-    newPreviews.splice(index, 1)
-
-    setSelectedFiles(newFiles)
-    setPreviewUrls(newPreviews)
-  }
+  
+    const removeImage = (index: number) => {
+      const newFiles = [...selectedFiles]
+      const newPreviews = [...previewUrls]
+      
+      newFiles.splice(index, 1)
+      newPreviews.splice(index, 1)
+  
+      setSelectedFiles(newFiles)
+      setPreviewUrls(newPreviews)
+    }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,6 +86,7 @@ export default function NewRequestPage() {
 
       let uploadedUrls: string[] = []
 
+      // ... (画像アップロード処理は変更なし) ...
       if (selectedFiles.length > 0) {
         setLoadingText(`Compressing & Uploading ${selectedFiles.length} images...`)
 
@@ -123,6 +130,17 @@ export default function NewRequestPage() {
 
       if (dbError) throw dbError
 
+      // ↓↓↓ 2. ここにLINE通知処理を追加！ ↓↓↓
+      try {
+        const message = `🚨 新規リクエスト受信！\n\n👤 User: ${user.email}\n🏷️ キャラ名: ${formData.character_name}\n💰 予算: $${formData.budget}\n📝 詳細: ${formData.description || 'なし'}\n\n📷 画像枚数: ${uploadedUrls.length}枚`
+        
+        await sendLineNotification(message)
+      } catch (notifyError) {
+        // 通知エラーがあってもリクエスト自体は止めない
+        console.error('Notification failed:', notifyError)
+      }
+      // ↑↑↑ 追加ここまで ↑↑↑
+
       router.push('/mypage')
       router.refresh()
 
@@ -133,6 +151,7 @@ export default function NewRequestPage() {
     }
   }
 
+  // ... (return 以下の JSX は変更なし) ...
   return (
     <div className="min-h-screen bg-dark-bg text-white p-6 pb-20">
       <div className="max-w-2xl mx-auto">
