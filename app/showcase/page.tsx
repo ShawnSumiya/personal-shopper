@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { ExternalLink, ShoppingBag, Loader2, Search, ArrowRight } from 'lucide-react'
+import { ShoppingBag, Loader2, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 // 型定義
@@ -58,8 +58,8 @@ export default function ShowcasePage() {
             Curated Showcase
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Rare items we've hunted in Tokyo. <br className="hidden md:block" />
-            Check items details or request something specific.
+            Rare items we've curated in Tokyo. <br className="hidden md:block" />
+            Check items on eBay or request something specific.
           </p>
         </div>
       </div>
@@ -72,16 +72,12 @@ export default function ShowcasePage() {
           </div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {items.map((item) => (
-              <div 
-                key={item.id} 
-                className="bg-dark-card border border-gray-800 rounded-xl overflow-hidden hover:border-neon-cyan transition-all duration-300 group"
-              >
-                {/* ★修正: 常に詳細ページへリンクする */}
-                <Link 
-                  href={`/showcase/${item.id}`}
-                  className="block h-full cursor-pointer"
-                >
+            {items.map((item) => {
+              // eBayリンクがあり、かつ売り切れでない場合のみクリック可能にする
+              const isClickable = !item.is_sold && item.ebay_url
+
+              const CardContent = (
+                <>
                   {/* 画像エリア */}
                   <div className="aspect-square bg-black relative overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -98,13 +94,16 @@ export default function ShowcasePage() {
                       </div>
                     )}
 
-                    {/* ホバー時のオーバーレイ（詳細を見る） */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                      <span className="bg-white text-black font-bold py-3 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
-                        <Search className="w-5 h-5" />
-                        View Details
-                      </span>
-                    </div>
+                    {/* ホバー時のオーバーレイ（Check on eBay） */}
+                    {!item.is_sold && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                        {/* ▼ ここを変更しました：Check on eBay ▼ */}
+                        <span className="bg-white text-black font-bold py-3 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
+                          <ShoppingBag className="w-5 h-5" />
+                          Check on eBay
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* 情報エリア */}
@@ -120,21 +119,45 @@ export default function ShowcasePage() {
                         </p>
                       </div>
                       
-                      <div className="text-gray-400 group-hover:text-white transition-colors">
-                        <ArrowRight size={20} />
-                      </div>
+                      {!item.is_sold && item.ebay_url && (
+                        <div className="text-gray-400 group-hover:text-white transition-colors">
+                          <ExternalLink size={20} />
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Link>
-              </div>
-            ))}
+                </>
+              )
+
+              return (
+                <div 
+                  key={item.id} 
+                  className="bg-dark-card border border-gray-800 rounded-xl overflow-hidden hover:border-neon-cyan transition-all duration-300 group"
+                >
+                  {isClickable ? (
+                    <a 
+                      href={item.ebay_url!} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block h-full cursor-pointer"
+                    >
+                      {CardContent}
+                    </a>
+                  ) : (
+                    <div className="block h-full cursor-default">
+                      {CardContent}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 
         {/* 空の状態 */}
         {!loading && items.length === 0 && (
           <div className="text-center py-20 bg-dark-card/50 rounded-2xl border border-gray-800 border-dashed">
-            <p className="text-gray-400 text-lg">Items are being hunted in Akihabara...</p>
+            <p className="text-gray-400 text-lg">Items are being curated in Akihabara...</p>
             <p className="text-sm text-gray-600 mt-2">Check back soon!</p>
           </div>
         )}
