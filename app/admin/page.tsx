@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, LayoutGrid } from 'lucide-react' // ★アイコン追加
 
 export default async function AdminDashboard() {
   const cookieStore = cookies()
@@ -25,24 +25,39 @@ export default async function AdminDashboard() {
     redirect('/mypage')
   }
 
-  // 全データ取得（未読があるものを優先して上に）
+  // 全データ取得
   const { data: requests } = await supabase
     .from('requests')
     .select('*')
-    .order('unread_admin', { ascending: false }) // ★未読優先
-    .order('created_at', { ascending: false })   // 次に日付順
+    .order('unread_admin', { ascending: false })
+    .order('created_at', { ascending: false })
 
   return (
     <div className="min-h-screen bg-dark-bg text-white p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <Link href="/mypage" className="text-gray-400 hover:text-white">
+        
+        {/* ▼ ヘッダー修正箇所 ▼ */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <div className="flex items-center gap-6">
+            <h1 className="text-3xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            
+            {/* ★ここに追加！Showcase管理画面へのボタン */}
+            <Link 
+              href="/admin/showcase" 
+              className="flex items-center gap-2 bg-neon-pink hover:bg-neon-pinkLight text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-neon-pink/20 transition-all hover:scale-105"
+            >
+              <LayoutGrid size={18} />
+              Manage Showcase
+            </Link>
+          </div>
+
+          <Link href="/mypage" className="text-gray-400 hover:text-white text-sm border border-gray-700 px-4 py-2 rounded hover:border-gray-500 transition-colors">
             Switch to User View
           </Link>
         </div>
+        {/* ▲ ヘッダー修正ここまで ▲ */}
 
         <div className="grid gap-4">
           {requests?.map((req) => (
@@ -68,7 +83,7 @@ export default async function AdminDashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-bold text-lg truncate">{req.character_name}</h3>
-                    {/* ★管理者用 未読バッジ */}
+                    {/* 未読バッジ */}
                     {req.unread_admin && (
                       <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
                         <MessageCircle size={10} fill="white" /> New Msg
