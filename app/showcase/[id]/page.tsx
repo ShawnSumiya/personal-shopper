@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
-import { ArrowLeft, ShoppingBag, Share2, CheckCircle, XCircle, Copy } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft, ShoppingBag, Share2, CheckCircle, XCircle } from 'lucide-react'
 
 // 型定義
 type ShowcaseItem = {
@@ -15,7 +14,6 @@ type ShowcaseItem = {
   ebay_url: string | null
   is_sold: boolean
   category: string | null
-  created_at: string
 }
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
@@ -30,7 +28,8 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchItem = async () => {
-      const { data, error } = await supabase
+      // params.id を使ってデータを取得
+      const { data } = await supabase
         .from('showcase_items')
         .select('*')
         .eq('id', params.id)
@@ -40,7 +39,7 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
       setLoading(false)
     }
     fetchItem()
-  }, [params.id, supabase])
+  }, [params.id])
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -164,13 +163,7 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                 {copied ? 'Link Copied!' : 'Share this Item'}
               </button>
             </div>
-
-            <div className="text-sm text-gray-500 pt-8">
-              <p>Authentic Japanese item shipped directly from Tokyo.</p>
-              <p>Condition verified by Personal Shopper staff.</p>
-            </div>
           </div>
-
         </div>
       </main>
     </div>
