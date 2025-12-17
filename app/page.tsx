@@ -1,7 +1,25 @@
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
-import { ArrowRight, ShoppingBag, Globe, ShieldCheck, LayoutGrid } from 'lucide-react'
+import { ArrowRight, ShoppingBag, Globe, ShieldCheck, LayoutGrid, User } from 'lucide-react'
 
-export default function Home() {
+export default async function Home() {
+  // 1. Supabaseを使って、今アクセスしている人がログイン済みか確認する
+  const cookieStore = cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    }
+  )
+  
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
@@ -19,12 +37,26 @@ export default function Home() {
             <LayoutGrid size={16} />
             <span className="hidden sm:inline">Showcase</span>
           </Link>
-          <Link 
-            href="/login" 
-            className="text-sm font-bold text-neon-pink hover:text-neon-pinkLight transition-colors"
-          >
-            Login
-          </Link>
+
+          {/* ▼ ここが変わりました！ユーザーがいれば My Page、いなければ Login ▼ */}
+          {user ? (
+            <Link 
+              href="/mypage" 
+              className="text-sm font-bold text-neon-cyan hover:text-cyan-400 transition-colors flex items-center gap-2 border border-neon-cyan/50 px-3 py-1.5 rounded-full hover:bg-neon-cyan/10"
+            >
+              <User size={16} />
+              My Page
+            </Link>
+          ) : (
+            <Link 
+              href="/login" 
+              className="text-sm font-bold text-neon-pink hover:text-neon-pinkLight transition-colors"
+            >
+              Login
+            </Link>
+          )}
+          {/* ▲ ここまで ▲ */}
+          
         </nav>
       </header>
 
@@ -48,7 +80,6 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            {/* ▼ ここを修正しました！ (/login -> /requests/new) */}
             <Link 
               href="/requests/new" 
               className="w-full sm:w-auto px-8 py-4 bg-neon-pink hover:bg-neon-pinkLight text-white font-bold rounded-full transition-all hover:scale-105 shadow-[0_0_20px_rgba(236,72,153,0.5)] flex items-center justify-center gap-2"

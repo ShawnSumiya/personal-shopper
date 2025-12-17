@@ -1,152 +1,134 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import { ExternalLink, ShoppingBag, Loader2, ArrowRight, LayoutGrid } from 'lucide-react'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
+import { ArrowRight, ShoppingBag, Globe, ShieldCheck, LayoutGrid, User } from 'lucide-react'
 
-// 型定義
-type ShowcaseItem = {
-  id: string
-  title: string
-  price: number
-  image_url: string
-  ebay_url: string | null
-  is_sold: boolean
-}
-
-export default function ShowcasePage() {
-  const [items, setItems] = useState<ShowcaseItem[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const supabase = createBrowserClient(
+export default async function Home() {
+  // 1. Supabaseを使って、今アクセスしている人がログイン済みか確認する
+  const cookieStore = cookies()
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  useEffect(() => {
-    const fetchItems = async () => {
-      const { data } = await supabase
-        .from('showcase_items')
-        .select('*')
-        .order('created_at', { ascending: false }) // 新しい順
-      
-      if (data) setItems(data)
-      setLoading(false)
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+      },
     }
-    fetchItems()
-  }, [])
+  )
+  
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
-      {/* 簡易ヘッダー */}
-      <header className="px-6 h-20 flex items-center justify-between border-b border-gray-900 bg-black/80 backdrop-blur-md sticky top-0 z-50">
-        <Link href="/" className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
+    <div className="min-h-screen bg-black text-white flex flex-col">
+      {/* Header */}
+      <header className="px-6 h-20 flex items-center justify-between border-b border-gray-900 sticky top-0 bg-black/80 backdrop-blur-md z-50">
+        <Link href="/" className="text-xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent hover:opacity-80 transition-opacity">
           Personal Shopper
         </Link>
-        <Link href="/requests/new" className="bg-neon-pink px-4 py-2 rounded-full font-bold text-sm hover:bg-neon-pinkLight transition text-white">
-          Request Item
-        </Link>
+        
+        {/* ナビゲーションメニュー */}
+        <nav className="flex items-center gap-6">
+          <Link 
+            href="/showcase" 
+            className="text-sm font-bold text-gray-300 hover:text-white transition-colors flex items-center gap-2"
+          >
+            <LayoutGrid size={16} />
+            <span className="hidden sm:inline">Showcase</span>
+          </Link>
+
+          {/* ▼ ここが変わりました！ユーザーがいれば My Page、いなければ Login ▼ */}
+          {user ? (
+            <Link 
+              href="/mypage" 
+              className="text-sm font-bold text-neon-cyan hover:text-cyan-400 transition-colors flex items-center gap-2 border border-neon-cyan/50 px-3 py-1.5 rounded-full hover:bg-neon-cyan/10"
+            >
+              <User size={16} />
+              My Page
+            </Link>
+          ) : (
+            <Link 
+              href="/login" 
+              className="text-sm font-bold text-neon-pink hover:text-neon-pinkLight transition-colors"
+            >
+              Login
+            </Link>
+          )}
+          {/* ▲ ここまで ▲ */}
+          
+        </nav>
       </header>
 
-      {/* ヘッダーエリア */}
-      <div className="relative py-20 px-6 overflow-hidden">
-        {/* 背景装飾 */}
-        <div className="absolute top-0 left-0 w-full h-full bg-cyberpunk-gradient opacity-10 blur-3xl" />
-        
-        <div className="relative max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-cyberpunk-gradient bg-clip-text text-transparent tracking-tight">
-            Curated Showcase
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-3xl space-y-8">
+          <div className="inline-block px-4 py-1.5 rounded-full border border-neon-pink/50 bg-neon-pink/10 text-neon-pink text-sm font-bold mb-4 animate-pulse">
+            Now Accepting Requests
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+            Your Access to <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500">
+              Japanese Goods
+            </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Rare items we've hunted in Tokyo. <br className="hidden md:block" />
-            Check our eBay store for available treasures or request something specific.
+          
+          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+            We buy anime merch, games, and exclusive items from Japan 
+            and ship them directly to you. Simple, fast, and secure.
           </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Link 
+              href="/requests/new" 
+              className="w-full sm:w-auto px-8 py-4 bg-neon-pink hover:bg-neon-pinkLight text-white font-bold rounded-full transition-all hover:scale-105 shadow-[0_0_20px_rgba(236,72,153,0.5)] flex items-center justify-center gap-2"
+            >
+              <ShoppingBag size={20} />
+              Start Request
+            </Link>
+            
+            <Link 
+              href="/showcase" 
+              className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-full border border-gray-700 transition-all flex items-center justify-center gap-2 group"
+            >
+              <LayoutGrid size={20} />
+              Browse Showcase
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {/* 商品グリッド */}
-      <div className="max-w-7xl mx-auto px-6 pb-24">
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin w-12 h-12 text-neon-cyan" />
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-8 mt-20 max-w-5xl text-left">
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-blue-500/50 transition-colors">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400 mb-4">
+              <ShoppingBag />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Request Anything</h3>
+            <p className="text-gray-400">Send us a photo or link of the item you want. We handle the searching.</p>
           </div>
-        ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {items.map((item) => (
-              <div 
-                key={item.id} 
-                className="bg-dark-card border border-gray-800 rounded-xl overflow-hidden hover:border-neon-cyan transition-all duration-300 group"
-              >
-                {/* 画像エリア */}
-                <div className="aspect-square bg-black relative overflow-hidden">
-                  {/* 画像本体：売れたものは少しだけグレーにして区別（でもはっきり見える） */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={item.image_url} 
-                    alt={item.title} 
-                    className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${item.is_sold ? 'grayscale-[50%]' : ''}`} 
-                  />
-                  
-                  {/* SOLD OUTタグ：画像を隠さないように右上に配置 */}
-                  {item.is_sold && (
-                    <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 font-bold text-xs tracking-widest rounded shadow-lg border border-red-400 z-10">
-                      SOLD OUT
-                    </div>
-                  )}
-
-                  {/* eBayボタン（販売中のみ表示：変更なし） */}
-                  {!item.is_sold && item.ebay_url && (
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                      <a 
-                        href={item.ebay_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="bg-white text-black font-bold py-3 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center hover:bg-gray-200"
-                      >
-                        <ShoppingBag className="w-5 h-5 mr-2" />
-                        Buy on eBay
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* 情報エリア（変更なし） */}
-                <div className="p-5">
-                  <h3 className="font-bold text-lg mb-2 line-clamp-2 min-h-[3.5rem] text-white">{item.title}</h3>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-0.5">Reference Price</p>
-                      <p className={`text-2xl font-bold font-mono ${item.is_sold ? 'text-gray-400 decoration-slate-500' : 'text-neon-cyan'}`}>
-                        ${item.price}
-                      </p>
-                    </div>
-                    
-                    {!item.is_sold && item.ebay_url ? (
-                      <a 
-                        href={item.ebay_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        <ExternalLink size={20} />
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-purple-500/50 transition-colors">
+            <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400 mb-4">
+              <ShieldCheck />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Secure Buying</h3>
+            <p className="text-gray-400">We verify the item condition and handle the purchase safely via eBay.</p>
           </div>
-        )}
-
-        {/* 空の状態 */}
-        {!loading && items.length === 0 && (
-          <div className="text-center py-20 bg-dark-card/50 rounded-2xl border border-gray-800 border-dashed">
-            <p className="text-gray-400 text-lg">Items are being hunted in Akihabara...</p>
-            <p className="text-sm text-gray-600 mt-2">Check back soon!</p>
+          <div className="p-6 rounded-2xl bg-gray-900/50 border border-gray-800 hover:border-pink-500/50 transition-colors">
+            <div className="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center text-pink-400 mb-4">
+              <Globe />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Global Shipping</h3>
+            <p className="text-gray-400">We ship worldwide. Get your favorite Japanese items delivered to your door.</p>
           </div>
-        )}
-      </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-8 text-center text-gray-600 text-sm border-t border-gray-900">
+        © 2025 Personal Shopper Service. All rights reserved.
+      </footer>
     </div>
   )
 }

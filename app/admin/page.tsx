@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, LayoutGrid } from 'lucide-react' // ★アイコン追加
+import { MessageCircle, LayoutGrid } from 'lucide-react'
 
 export default async function AdminDashboard() {
   const cookieStore = cookies()
@@ -25,18 +25,18 @@ export default async function AdminDashboard() {
     redirect('/mypage')
   }
 
-  // 全データ取得
+  // 全データ取得（未読があるものを優先して上に）
   const { data: requests } = await supabase
     .from('requests')
     .select('*')
-    .order('unread_admin', { ascending: false })
-    .order('created_at', { ascending: false })
+    .order('unread_admin', { ascending: false }) // 未読優先
+    .order('created_at', { ascending: false })   // 次に日付順
 
   return (
     <div className="min-h-screen bg-dark-bg text-white p-6">
       <div className="max-w-6xl mx-auto">
         
-        {/* ▼ ヘッダー修正箇所 ▼ */}
+        {/* ヘッダーエリア */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <div className="flex items-center gap-6">
             <h1 className="text-3xl font-bold bg-cyberpunk-gradient bg-clip-text text-transparent">
@@ -57,8 +57,8 @@ export default async function AdminDashboard() {
             Switch to User View
           </Link>
         </div>
-        {/* ▲ ヘッダー修正ここまで ▲ */}
 
+        {/* リクエスト一覧 */}
         <div className="grid gap-4">
           {requests?.map((req) => (
             <Link 
