@@ -5,7 +5,6 @@ import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import { Loader2, Save } from 'lucide-react'
 
-// データ型定義（あなたのコードに合わせています）
 interface Request {
   id: string
   status: string
@@ -17,14 +16,12 @@ export default function AdminRequestForm({ request }: { request: Request }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   
-  // フォームの状態管理
   const [formData, setFormData] = useState({
     status: request.status || 'Pending',
     ebay_listing_url: request.ebay_listing_url || '',
     admin_notes: request.admin_notes || '',
   })
 
-  // Supabaseクライアント作成
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -36,35 +33,20 @@ export default function AdminRequestForm({ request }: { request: Request }) {
 
     try {
       // ---------------------------------------------------------
-      // 1. ステータスの更新 (ここがエラーの原因でした！)
-      // 普通の update ではなく、「裏口関数 (RPC)」を使って更新します
+      // ★ 修正ポイント: 全項目をまとめて「裏口関数 (RPC)」で保存する
+      // これにより通常の update を一切使わないため、無限ループエラーを回避できます
       // ---------------------------------------------------------
-      if (formData.status !== request.status) {
-        const { error: statusError } = await supabase.rpc('update_request_status', {
-          p_request_id: request.id,
-          p_status: formData.status
-        })
-        
-        if (statusError) throw statusError
-      }
+      const { error } = await supabase.rpc('update_request_admin_all', {
+        p_request_id: request.id,
+        p_status: formData.status,
+        p_ebay_url: formData.ebay_listing_url || null, // 空文字ならnullにする
+        p_admin_notes: formData.admin_notes || null
+      })
 
-      // ---------------------------------------------------------
-      // 2. その他の情報の更新 (eBay URL, メモ)
-      // ステータス以外は通常の update で更新します
-      // ---------------------------------------------------------
-      const { error: infoError } = await supabase
-        .from('requests')
-        .update({
-          ebay_listing_url: formData.ebay_listing_url || null,
-          admin_notes: formData.admin_notes || null,
-        })
-        .eq('id', request.id)
+      if (error) throw error
 
-      if (infoError) throw infoError
-
-      // 成功時
       alert('Updated successfully!')
-      router.refresh() // 画面を更新して最新の状態にする
+      router.refresh()
       
     } catch (error: any) {
       console.error('Error updating request:', error)
