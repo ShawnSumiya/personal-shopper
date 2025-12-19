@@ -17,7 +17,8 @@ export default function AdminRequestForm({ request }: { request: Request }) {
   const [loading, setLoading] = useState(false)
   
   const [formData, setFormData] = useState({
-    status: request.status || 'Pending',
+    // DBに合わせて初期値も小文字にする
+    status: request.status ? request.status.toLowerCase() : 'pending',
     ebay_listing_url: request.ebay_listing_url || '',
     admin_notes: request.admin_notes || '',
   })
@@ -32,14 +33,11 @@ export default function AdminRequestForm({ request }: { request: Request }) {
     setLoading(true)
 
     try {
-      // ---------------------------------------------------------
-      // ★ 修正ポイント: 全項目をまとめて「裏口関数 (RPC)」で保存する
-      // これにより通常の update を一切使わないため、無限ループエラーを回避できます
-      // ---------------------------------------------------------
+      // 全項目をまとめて「裏口関数 (RPC)」で保存
       const { error } = await supabase.rpc('update_request_admin_all', {
         p_request_id: request.id,
-        p_status: formData.status,
-        p_ebay_url: formData.ebay_listing_url || null, // 空文字ならnullにする
+        p_status: formData.status, // ここが小文字(pendingなど)で送られます
+        p_ebay_url: formData.ebay_listing_url || null,
         p_admin_notes: formData.admin_notes || null
       })
 
@@ -70,12 +68,13 @@ export default function AdminRequestForm({ request }: { request: Request }) {
           className="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neon-pink"
           disabled={loading}
         >
-          <option value="Pending">Pending (未対応)</option>
-          <option value="Negotiation">Negotiation (交渉中)</option>
-          <option value="Sourced">Sourced (確保済み)</option>
-          <option value="Listed">Listed (出品済み)</option>
-          <option value="Completed">Completed (完了)</option>
-          <option value="Cancelled">Cancelled (キャンセル)</option>
+          {/* ★修正ポイント: valueをすべて小文字に変更しました */}
+          <option value="pending">Pending (未対応)</option>
+          <option value="negotiation">Negotiation (交渉中)</option>
+          <option value="sourced">Sourced (確保済み)</option>
+          <option value="listed">Listed (出品済み)</option>
+          <option value="completed">Completed (完了)</option>
+          <option value="cancelled">Cancelled (キャンセル)</option>
         </select>
       </div>
 
