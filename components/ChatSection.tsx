@@ -116,13 +116,15 @@ export default function ChatSection({ requestId }: { requestId: string }) {
         setMessages((prev) => [...prev, data as Message])
       }
 
-      // 2. LINE通知を送信 (Server Actionを呼び出し)
-      // 自分以外（相手）への通知として送る内容を整形
-      const senderName = isAdmin ? 'Personal Shopper' : 'User'
-      const notifyText = `[New Message from ${senderName}]\n\n${newMessage}`
-      
-      // 非同期で実行（awaitしても良いですが、UIをブロックしないように放り投げてもOK）
-      await sendLineNotification(notifyText)
+      // 2. LINE通知を送信 (Admin以外＝ユーザーからのメッセージの時だけ送る)
+      if (!isAdmin) {
+        const senderDisplayName = `User (${currentUser.email})`
+        const notifyText = `💬 新着メッセージ受信\n\n👤 送信者: ${senderDisplayName}\n📝 内容:\n${newMessage}`
+        
+        // 非同期で送信
+        await sendLineNotification(notifyText)
+      }
+      // ↑↑↑↑↑ 書き換えここまで ↑↑↑↑↑
       
       setNewMessage('')
     } catch (err) {
