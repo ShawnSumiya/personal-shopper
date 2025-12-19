@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Send, Loader2, ShieldCheck } from 'lucide-react'
-
-// ★ここを実際の line.ts のパスに合わせてください
+// ★実際のパスに合わせてください
 import { sendLineNotification } from '@/lib/line' 
 
 type Message = {
@@ -32,12 +31,14 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUser(user)
 
-      // 既読処理
+      // ■ 既読処理（画面を開いた瞬間）
       if (user) {
         const isAdmin = user.email === 'shawn.sumiya@gmail.com'
         if (isAdmin) {
+          // 管理者が見た → 管理者の未読を消す
           await supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
         } else {
+          // ユーザーが見た → ユーザーの未読を消す
           await supabase.from('requests').update({ unread_user: false }).eq('id', requestId)
         }
       }
@@ -67,7 +68,7 @@ export default function ChatSection({ requestId }: { requestId: string }) {
               return [...prev, newMsg]
             })
             
-            // 受信時の既読処理
+            // 受信時の既読処理（画面を開きっぱなしの場合）
             if (user && newMsg.user_id !== user.id) {
                const isAdmin = user.email === 'shawn.sumiya@gmail.com'
                if (isAdmin) supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
@@ -116,16 +117,21 @@ export default function ChatSection({ requestId }: { requestId: string }) {
         setMessages((prev) => [...prev, data as Message])
       }
 
-      // 2. LINE通知を送信 (Admin以外＝ユーザーからの時だけ送る)
+      // ■ 未読フラグを相手につける (NEWバッジ用)
+      if (isAdmin) {
+        // 管理者が送った → ユーザーにNEWをつける
+        await supabase.from('requests').update({ unread_user: true }).eq('id', requestId)
+      } else {
+        // ユーザーが送った → 管理者にNEWをつける
+        await supabase.from('requests').update({ unread_admin: true }).eq('id', requestId)
+      }
+
+      // 2. LINE通知 (ユーザーからのメッセージのみ通知)
       if (!isAdmin) {
-        // currentUser.email を取得して、誰からのメッセージか明記する
         const userEmail = currentUser?.email || 'Unknown User'
-        
         const notifyText = `💬 メッセージ受信\n\n👤 From: ${userEmail}\n📝 内容:\n${newMessage}`
-        
         await sendLineNotification(notifyText)
       }
-      // ↑↑↑↑↑ 書き換えここまで ↑↑↑↑↑
       
       setNewMessage('')
     } catch (err) {
@@ -149,34 +155,26 @@ export default function ChatSection({ requestId }: { requestId: string }) {
         {messages.map((msg) => {
           const me = isMe(msg.user_id)
           
-          // ★ 色分けロジックの復元
-          // 管理者(Personal Shopper)のメッセージならピンク系、ユーザーなら青/グレー
           let bubbleClass = ''
           if (msg.is_admin) {
-            // 管理者の発言
             bubbleClass = me 
-              ? 'bg-pink-900/50 border border-neon-pink text-pink-100 rounded-br-none' // 自分が管理者で送信
-              : 'bg-pink-900/30 border border-pink-800 text-pink-200 rounded-bl-none' // 相手が管理者で受信
+              ? 'bg-pink-900/50 border border-neon-pink text-pink-100 rounded-br-none' 
+              : 'bg-pink-900/30 border border-pink-800 text-pink-200 rounded-bl-none'
           } else {
-            // ユーザーの発言
             bubbleClass = me
-              ? 'bg-blue-600 text-white rounded-br-none' // 自分がユーザーで送信
-              : 'bg-gray-700 text-gray-200 rounded-bl-none' // 相手がユーザーで受信
+              ? 'bg-blue-600 text-white rounded-br-none'
+              : 'bg-gray-700 text-gray-200 rounded-bl-none'
           }
 
           return (
             <div key={msg.id} className={`flex ${me ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${bubbleClass}`}>
-                
-                {/* 相手からのメッセージで、かつ管理者の場合のみバッジを表示 */}
                 {!me && msg.is_admin && (
                   <div className="text-[10px] text-neon-pink mb-1 font-bold flex items-center gap-1">
                     <ShieldCheck size={10} /> Personal Shopper
                   </div>
                 )}
-                
                 {msg.content}
-                
                 <div className={`text-[10px] mt-1 opacity-50 ${me ? 'text-right' : 'text-left'}`}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
