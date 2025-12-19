@@ -116,12 +116,13 @@ export default function ChatSection({ requestId }: { requestId: string }) {
         setMessages((prev) => [...prev, data as Message])
       }
 
-      // 2. LINE通知を送信 (Admin以外＝ユーザーからのメッセージの時だけ送る)
+      // 2. LINE通知を送信 (Admin以外＝ユーザーからの時だけ送る)
       if (!isAdmin) {
-        const senderDisplayName = `User (${currentUser.email})`
-        const notifyText = `💬 新着メッセージ受信\n\n👤 送信者: ${senderDisplayName}\n📝 内容:\n${newMessage}`
+        // currentUser.email を取得して、誰からのメッセージか明記する
+        const userEmail = currentUser?.email || 'Unknown User'
         
-        // 非同期で送信
+        const notifyText = `💬 メッセージ受信\n\n👤 From: ${userEmail}\n📝 内容:\n${newMessage}`
+        
         await sendLineNotification(notifyText)
       }
       // ↑↑↑↑↑ 書き換えここまで ↑↑↑↑↑
