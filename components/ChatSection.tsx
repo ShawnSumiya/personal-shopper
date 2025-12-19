@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Send, Loader2, ShieldCheck } from 'lucide-react'
 
+// ★ここを実際の line.ts のパスに合わせてください
+import { sendLineNotification } from '@/lib/line' 
+
 type Message = {
   id: number
   content: string
@@ -29,20 +32,16 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUser(user)
 
+      // 既読処理
       if (user) {
         const isAdmin = user.email === 'shawn.sumiya@gmail.com'
-        
-        // ★既読処理: 画面を開いたので、自分宛ての通知フラグをオフにする
         if (isAdmin) {
-          // 管理者が見ているなら、管理者用通知をオフ
           await supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
         } else {
-          // ユーザーが見ているなら、ユーザー用通知をオフ
           await supabase.from('requests').update({ unread_user: false }).eq('id', requestId)
         }
       }
 
-      // メッセージ取得
       const { data } = await supabase
         .from('messages')
         .select('*')
@@ -51,7 +50,6 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       
       if (data) setMessages(data)
 
-      // リアルタイム受信
       const channel = supabase
         .channel(`chat-${requestId}`)
         .on(
@@ -69,8 +67,7 @@ export default function ChatSection({ requestId }: { requestId: string }) {
               return [...prev, newMsg]
             })
             
-            // ★受信時も、この画面を開きっぱなしなら即座に既読にする
-            // (自分が送ったメッセージでなければ)
+            // 受信時の既読処理
             if (user && newMsg.user_id !== user.id) {
                const isAdmin = user.email === 'shawn.sumiya@gmail.com'
                if (isAdmin) supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
@@ -101,6 +98,7 @@ export default function ChatSection({ requestId }: { requestId: string }) {
     try {
       const isAdmin = currentUser.email === 'shawn.sumiya@gmail.com'
 
+      // 1. メッセージを保存
       const { data, error } = await supabase
         .from('messages')
         .insert({
@@ -117,6 +115,14 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       if (data) {
         setMessages((prev) => [...prev, data as Message])
       }
+
+      // 2. LINE通知を送信 (Server Actionを呼び出し)
+      // 自分以外（相手）への通知として送る内容を整形
+      const senderName = isAdmin ? 'Personal Shopper' : 'User'
+      const notifyText = `[New Message from ${senderName}]\n\n${newMessage}`
+      
+      // 非同期で実行（awaitしても良いですが、UIをブロックしないように放り投げてもOK）
+      await sendLineNotification(notifyText)
       
       setNewMessage('')
     } catch (err) {
@@ -137,30 +143,37 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-600 mt-10 text-sm">
-            No messages yet.<br />
-            Feel free to ask any questions here.
-          </div>
-        )}
-        
         {messages.map((msg) => {
           const me = isMe(msg.user_id)
+          
+          // ★ 色分けロジックの復元
+          // 管理者(Personal Shopper)のメッセージならピンク系、ユーザーなら青/グレー
+          let bubbleClass = ''
+          if (msg.is_admin) {
+            // 管理者の発言
+            bubbleClass = me 
+              ? 'bg-pink-900/50 border border-neon-pink text-pink-100 rounded-br-none' // 自分が管理者で送信
+              : 'bg-pink-900/30 border border-pink-800 text-pink-200 rounded-bl-none' // 相手が管理者で受信
+          } else {
+            // ユーザーの発言
+            bubbleClass = me
+              ? 'bg-blue-600 text-white rounded-br-none' // 自分がユーザーで送信
+              : 'bg-gray-700 text-gray-200 rounded-bl-none' // 相手がユーザーで受信
+          }
+
           return (
             <div key={msg.id} className={`flex ${me ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${
-                  me
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-gray-700 text-gray-200 rounded-bl-none'
-                }`}
-              >
+              <div className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${bubbleClass}`}>
+                
+                {/* 相手からのメッセージで、かつ管理者の場合のみバッジを表示 */}
                 {!me && msg.is_admin && (
                   <div className="text-[10px] text-neon-pink mb-1 font-bold flex items-center gap-1">
-                    <ShieldCheck size={10} /> ADMIN
+                    <ShieldCheck size={10} /> Personal Shopper
                   </div>
                 )}
+                
                 {msg.content}
+                
                 <div className={`text-[10px] mt-1 opacity-50 ${me ? 'text-right' : 'text-left'}`}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
