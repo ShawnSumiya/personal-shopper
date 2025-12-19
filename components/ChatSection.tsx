@@ -31,16 +31,15 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUser(user)
 
-      // ■ 既読処理（画面を開いた瞬間）
+      // ■ 既読処理 1（画面を開いた瞬間）
+      // ★ RPC（裏口関数）を使って安全に既読をつける
       if (user) {
         const isAdmin = user.email === 'shawn.sumiya@gmail.com'
-        if (isAdmin) {
-          // 管理者が見た → 管理者の未読を消す
-          await supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
-        } else {
-          // ユーザーが見た → ユーザーの未読を消す
-          await supabase.from('requests').update({ unread_user: false }).eq('id', requestId)
-        }
+        
+        await supabase.rpc('mark_request_read', {
+          p_request_id: requestId,
+          p_is_admin: isAdmin
+        })
       }
 
       const { data } = await supabase
@@ -68,11 +67,16 @@ export default function ChatSection({ requestId }: { requestId: string }) {
               return [...prev, newMsg]
             })
             
-            // 受信時の既読処理（画面を開きっぱなしの場合）
+            // ■ 既読処理 2（画面を開いている時に受信した瞬間）
+            // ★ ここも RPC に書き換えました！
             if (user && newMsg.user_id !== user.id) {
                const isAdmin = user.email === 'shawn.sumiya@gmail.com'
-               if (isAdmin) supabase.from('requests').update({ unread_admin: false }).eq('id', requestId)
-               else supabase.from('requests').update({ unread_user: false }).eq('id', requestId)
+               
+               // 古い update ではなく、ここでも RPC を使う
+               supabase.rpc('mark_request_read', {
+                 p_request_id: requestId,
+                 p_is_admin: isAdmin
+               })
             }
           }
         )
@@ -118,6 +122,7 @@ export default function ChatSection({ requestId }: { requestId: string }) {
       }
 
       // ■ 未読フラグを相手につける (NEWバッジ用)
+      // ※ここは権限エラーが出にくいので、一旦このまま direct update でOKです
       if (isAdmin) {
         // 管理者が送った → ユーザーにNEWをつける
         await supabase.from('requests').update({ unread_user: true }).eq('id', requestId)
