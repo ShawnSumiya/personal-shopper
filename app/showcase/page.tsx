@@ -13,6 +13,7 @@ type ShowcaseItem = {
   image_url: string
   ebay_url: string | null
   is_sold: boolean
+  priority: number // ★ここが重要
 }
 
 export default function ShowcasePage() {
@@ -29,6 +30,8 @@ export default function ShowcasePage() {
       const { data } = await supabase
         .from('showcase_items')
         .select('*')
+        // ★ここが一番重要：優先度順（高い順）で並べる命令
+        .order('priority', { ascending: false })
         .order('created_at', { ascending: false })
       
       if (data) setItems(data)
@@ -97,7 +100,6 @@ export default function ShowcasePage() {
                     {/* ホバー時のオーバーレイ（Check on eBay） */}
                     {!item.is_sold && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                        {/* ▼ ここを変更しました：Check on eBay ▼ */}
                         <span className="bg-white text-black font-bold py-3 px-6 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-2">
                           <ShoppingBag className="w-5 h-5" />
                           Check on eBay
