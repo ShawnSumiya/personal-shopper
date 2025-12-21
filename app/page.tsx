@@ -126,8 +126,28 @@ export default async function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 text-center text-gray-600 text-sm border-t border-gray-900">
-        © 2025 Personal Shopper Service. All rights reserved.
+      <footer className="py-10 border-t border-gray-900 bg-black/40 mt-12">
+        <div className="flex flex-col items-center justify-center gap-6">
+          
+          {/* X (Twitter) Link */}
+          {/* ↓ hrefの中身をご自身のXアカウントのURLに書き換えてください */}
+          <a 
+            href="https://x.com/Get_Japan_Merch" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group p-3 rounded-full bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:border-gray-600 hover:bg-gray-800 transition-all duration-300"
+            aria-label="Follow us on X"
+          >
+            {/* X Logo SVG */}
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+
+          <p className="text-gray-600 text-sm">
+            © 2025 Personal Shopper Service. All rights reserved.
+          </p>
+        </div>
       </footer>
     </div>
   )
